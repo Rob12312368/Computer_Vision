@@ -1,6 +1,8 @@
 from PIL import Image
 import numpy as np
 from typing import Union, Tuple, List
+from scipy.signal import convolve2d
+from skimage import filters
 import os
 def generateIndexMap(gray_list: List[np.ndarray], w_size: int) -> np.ndarray:
     # Generate an index map for the refocusing application
@@ -11,25 +13,31 @@ def generateIndexMap(gray_list: List[np.ndarray], w_size: int) -> np.ndarray:
     #   index_map - mxn index map
     #               index_map(i, j) is the index of the image that is in focus
     #               at pixel (i, j)
+    kernel = filters.laplace(np.zeros(3,3), dtype=np.float32)
+    print(kernel)
+    image_map = convolve2d(image, kernel, mode='same', boundary='fill', fillvalue=0)
+    '''
     k = w_size
     width = gray_list[0].shape[1]
     height = gray_list[0].shape[0]
     index_map = np.zeros((height, width))
+    square_b = {}
     for i in range(height):
         for j in range(width):
             top = i-k if i-k >= 0 else 0
             down = i+k+1 if i+k+1 <= height else height
             left = j-k if j-k >= 0 else 0
             right = j+k+1 if j+k+1 <= width else width
-            biggest = 0
-            biggest_idx = 0
-            for i, img in enumerate(gray_list):
+            square_b[(i,j)] = [top,down,left,right]
+            for index, img in enumerate(gray_list):
                 square = np.full((2*k+1, 2*k+1), np.average(img[top:down,left:right]))
+                #print(square.shape)
                 square[top+k-i:down+k-i,left+k-j:right+k-j] = img[top:down,left:right]
                 biggest = max(biggest, np.sum(np.gradient(np.gradient(square, axis=0), axis=0)) + np.sum(np.gradient(np.gradient(square, axis=1), axis=1)))
-                biggest_idx = i
+                biggest_idx = index
             index_map[i,j] = biggest_idx
     return index_map
+    '''
     raise NotImplementedError
 
 

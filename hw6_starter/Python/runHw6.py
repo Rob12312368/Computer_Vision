@@ -61,7 +61,7 @@ def challenge1a():
     # gray_stack is an mxnxk matrix.
 
     # Specify the (half) window size used for focus measure computation
-    half_window_size = 3
+    half_window_size = 100
 
     # Generate an index map, here we will only use the gray-scale images
     index_map = generateIndexMap(gray_stack, half_window_size)
@@ -76,4 +76,5 @@ def challenge1b():
     refocusApp(rgb_stack, index_map)
 
 if __name__ == '__main__':
-    runHw6()
+    #runHw6()
+    challenge1a()

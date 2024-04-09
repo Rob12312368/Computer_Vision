@@ -1,18 +1,32 @@
 import numpy as np
 
-# Create a 3x3 array
-array = np.array([[5,6,1],
-                  [8, 9, 1],
-                  [1, 1, 1]])
+import numpy as np
 
-# Compute the gradient along the x-axis (axis=1)
-gradient_x = np.gradient(np.gradient(array, axis=1),axis=1)
-
-# Compute the gradient along the y-axis (axis=0)
-gradient_y = np.gradient(np.gradient(array, axis=0),axis=0)
-
-print("Gradient along the x-axis:")
-print(np.sum(gradient_x))
-
-print("\nGradient along the y-axis:")
-print(np.sum(gradient_y))
+def generate_laplace_kernel(size):
+    """
+    Generate a Laplace kernel of a given size.
+    
+    Args:
+        size (int): The size of the kernel (odd number).
+    
+    Returns:
+        numpy.ndarray: The Laplace kernel.
+    """
+    # Check if the size is an odd number
+    if size % 2 == 0:
+        raise ValueError("The size of the kernel must be an odd number.")
+    
+    # Initialize the kernel with zeros
+    kernel = np.zeros((size, size), dtype=int)
+    
+    # Calculate the center position
+    center = size // 2
+    
+    # Set the values of the kernel
+    kernel[center, center] = -4
+    for i in range(size):
+        kernel[center, i] += 1
+        kernel[i, center] += 1
+    
+    return kernel
+print(generate_laplace_kernel(3))
