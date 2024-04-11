@@ -1,9 +1,11 @@
 from PIL import Image
 import numpy as np
 from typing import Union, Tuple, List
-from scipy.signal import convolve2d
-from skimage import filters
 import os
+from scipy.signal import convolve2d
+from scipy.ndimage import gaussian_filter
+import matplotlib.pyplot as plt
+import sys
 def generateIndexMap(gray_list: List[np.ndarray], w_size: int) -> np.ndarray:
     # Generate an index map for the refocusing application
     # Input:
@@ -13,9 +15,23 @@ def generateIndexMap(gray_list: List[np.ndarray], w_size: int) -> np.ndarray:
     #   index_map - mxn index map
     #               index_map(i, j) is the index of the image that is in focus
     #               at pixel (i, j)
-    kernel = filters.laplace(np.zeros(3,3), dtype=np.float32)
-    print(kernel)
-    image_map = convolve2d(image, kernel, mode='same', boundary='fill', fillvalue=0)
+    mvag_size = 20
+    mv_kernel = np.ones((mvag_size, mvag_size)) / (mvag_size * mvag_size)
+
+    img_height, img_width = gray_list[0].shape
+    lapla_values = np.zeros((img_height, img_width, len(gray_list)))
+    laplacian_x = np.array([[1, -2, 1]])
+    laplacian_y = np.array([[1],[-2],[1]])
+    for i,img in enumerate(gray_list):
+        lapla_x = convolve2d(img, laplacian_x, mode='same', boundary='fill', fillvalue=np.average(img))
+        lapla_y = convolve2d(img, laplacian_y, mode='same', boundary='fill', fillvalue=np.average(img))
+        tmp = np.sqrt(lapla_x ** 2 + lapla_y ** 2)
+        lapla_values[:,:,i] = gaussian_filter(tmp, 50)#convolve2d(tmp, mv_kernel, mode='same', boundary='fill', fillvalue=np.average(tmp))
+
+    #lapla_values = convolve2d(lapla_values, mv_kernel, mode='same', boundary='fill', fillvalue=np.average(lapla_values))
+    img_map = np.argmax(lapla_values,axis=2)
+    img_map = img_map / np.max(img_map)
+    return img_map
     '''
     k = w_size
     width = gray_list[0].shape[1]
@@ -61,6 +77,18 @@ def loadFocalStack(focal_stack_dir: str) -> Tuple[List[np.ndarray], List[np.ndar
     raise NotImplementedError
 
 
+
+def onclick(event, rgb_list, depth_map): 
+    img_height, img_width = rgb_list.shape
+    if event.inaxes:
+        x, y = event.xdata, event.ydata
+        if x is not None and y is not None:
+            if 0 <= x < img_width and 0 <= y < img_height:
+                plt.imshow(rgb_list[depth_map[y,x]])
+            else:
+                print("Clicked outside the image. Program will terminate.")
+                plt.close()  # Close the plot to terminate the program
+
 def refocusApp(rgb_list: List[np.ndarray], depth_map: np.ndarray) -> None:
     # Refocusing application
     # Input:
@@ -68,4 +96,10 @@ def refocusApp(rgb_list: List[np.ndarray], depth_map: np.ndarray) -> None:
     #   depth_map - mxn index map
     #               depth_map(i, j) is the index of the image that is in focus
     #               at pixel (i, j)
+    plt.imshow(rgb_list[0], cmap='gray')
+    plt.title('Click inside the image')
+    plt.show()
+    plt.connect('button_press_event', lambda event: onclick(event, rgb_list, depth_map))
+    
+
     raise NotImplementedError
