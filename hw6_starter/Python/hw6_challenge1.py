@@ -26,12 +26,11 @@ def generateIndexMap(gray_list: List[np.ndarray], w_size: int) -> np.ndarray:
         lapla_x = convolve2d(img, laplacian_x, mode='same', boundary='fill', fillvalue=np.average(img))
         lapla_y = convolve2d(img, laplacian_y, mode='same', boundary='fill', fillvalue=np.average(img))
         tmp = np.sqrt(lapla_x ** 2 + lapla_y ** 2)
-        lapla_values[:,:,i] = gaussian_filter(tmp, 50)#convolve2d(tmp, mv_kernel, mode='same', boundary='fill', fillvalue=np.average(tmp))
+        lapla_values[:,:,i] = gaussian_filter(tmp,50)#convolve2d(tmp, mv_kernel, mode='same', boundary='fill', fillvalue=np.average(tmp))
 
     #lapla_values = convolve2d(lapla_values, mv_kernel, mode='same', boundary='fill', fillvalue=np.average(lapla_values))
     img_map = np.argmax(lapla_values,axis=2)
-    img_map = img_map / np.max(img_map)
-    return img_map
+    return img_map / np.max(img_map), img_map 
     '''
     k = w_size
     width = gray_list[0].shape[1]
@@ -65,29 +64,29 @@ def loadFocalStack(focal_stack_dir: str) -> Tuple[List[np.ndarray], List[np.ndar
     #   rgb_list - List of RGB images for varying focal lengths
     #   gray_list - List of gray-scale images for varying focal lengths
     images = os.listdir(focal_stack_dir)
+    images = {int(v.split('.')[0][5:]):v for i,v in enumerate(images)}
+    images = dict(sorted(images.items())).values()
     rgb_list = []
     gray_list = []
     for img in images:
         img_path = os.path.join(focal_stack_dir, img)
         rgb_img = Image.open(img_path)
         gray_img = rgb_img.convert('L')
-        rgb_list.append(np.array(rgb_img))
-        gray_list.append(np.array(gray_img))
+        rgb_list.append(np.array(rgb_img)/255)
+        gray_list.append(np.array(gray_img)/255)
     return rgb_list, gray_list
     raise NotImplementedError
 
 
 
-def onclick(event, rgb_list, depth_map): 
-    img_height, img_width = rgb_list.shape
+def onclick(event, rgb_list, depth_map, ax): 
+    img_height, img_width, _ = rgb_list[0].shape
     if event.inaxes:
-        x, y = event.xdata, event.ydata
-        if x is not None and y is not None:
-            if 0 <= x < img_width and 0 <= y < img_height:
-                plt.imshow(rgb_list[depth_map[y,x]])
-            else:
-                print("Clicked outside the image. Program will terminate.")
-                plt.close()  # Close the plot to terminate the program
+        x, y = int(event.xdata), int(event.ydata)
+        ax.imshow(rgb_list[depth_map[y,x]])
+        plt.draw()
+    else:
+        sys.exit()
 
 def refocusApp(rgb_list: List[np.ndarray], depth_map: np.ndarray) -> None:
     # Refocusing application
@@ -96,10 +95,10 @@ def refocusApp(rgb_list: List[np.ndarray], depth_map: np.ndarray) -> None:
     #   depth_map - mxn index map
     #               depth_map(i, j) is the index of the image that is in focus
     #               at pixel (i, j)
-    plt.imshow(rgb_list[0], cmap='gray')
-    plt.title('Click inside the image')
-    plt.show()
-    plt.connect('button_press_event', lambda event: onclick(event, rgb_list, depth_map))
-    
+    fig, ax = plt.subplots()
+    ax.imshow(rgb_list[0])
+    ax.set_title('Click on the image to get coordinates')
+    ax.set_axis_off()
+    fig.canvas.mpl_connect('button_press_event', lambda event: onclick(event, rgb_list, depth_map, ax))
 
-    raise NotImplementedError
+    plt.show()

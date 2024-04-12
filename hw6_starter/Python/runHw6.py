@@ -64,20 +64,18 @@ def challenge1a():
     half_window_size = 7
 
     # Generate an index map, here we will only use the gray-scale images
-    index_map = generateIndexMap(gray_stack, half_window_size)
+    index_map, index_map2 = generateIndexMap(gray_stack, half_window_size)
     
-    #Image.fromarray((index_map * 255).astype(np.uint8)).save('outputs/index_map.png')
-    image = Image.fromarray((index_map * 255).astype(np.uint8))
-    print(index_map * 255)
-    image.show()
+    Image.fromarray((index_map * 255).astype(np.uint8)).save('output/index_map.png')
+    Image.fromarray((index_map2).astype(np.uint8)).save('output/index_map2.png')
 def challenge1b():
     from hw6_challenge1 import loadFocalStack, refocusApp
-    focal_stack_dir = 'stack'
+    focal_stack_dir = 'data/stack'
     rgb_stack, gray_stack = loadFocalStack(focal_stack_dir)
 
-    index_map = np.array(Image.open('outputs/index_map.png'))
+    index_map = np.array(Image.open('output/index_map2.png'))
     refocusApp(rgb_stack, index_map)
 
 if __name__ == '__main__':
-    #runHw6()
-    challenge1a()
+    runHw6()
+    #challenge1b()

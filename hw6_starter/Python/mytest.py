@@ -1,32 +1,27 @@
-import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+import sys
+def onclick(event):
+    # Check if the click happened within the axes of the image
+    if event.inaxes:
+        # Retrieve the coordinates (x, y) of the click
+        x = event.xdata
+        y = event.ydata
+        print(f'Clicked at (x, y) = ({x:.2f}, {y:.2f})')
+    else:
+        sys.exit()
 
-import numpy as np
 
-def generate_laplace_kernel(size):
-    """
-    Generate a Laplace kernel of a given size.
-    
-    Args:
-        size (int): The size of the kernel (odd number).
-    
-    Returns:
-        numpy.ndarray: The Laplace kernel.
-    """
-    # Check if the size is an odd number
-    if size % 2 == 0:
-        raise ValueError("The size of the kernel must be an odd number.")
-    
-    # Initialize the kernel with zeros
-    kernel = np.zeros((size, size), dtype=int)
-    
-    # Calculate the center position
-    center = size // 2
-    
-    # Set the values of the kernel
-    kernel[center, center] = -4
-    for i in range(size):
-        kernel[center, i] += 1
-        kernel[i, center] += 1
-    
-    return kernel
-print(generate_laplace_kernel(3))
+# Load and display an example image
+img_path = 'data/stack/frame1.jpg'  # Specify the path to your image file
+img = mpimg.imread(img_path)
+
+fig, ax = plt.subplots()
+ax.imshow(img)
+ax.set_title('Click on the image to get coordinates')
+ax.set_axis_off()
+
+# Connect the onclick function to the mouse click event
+fig.canvas.mpl_connect('button_press_event', onclick)
+
+plt.show()
